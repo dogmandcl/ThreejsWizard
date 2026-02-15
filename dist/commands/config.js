@@ -5,16 +5,62 @@ import * as readline from 'readline';
 import chalk from 'chalk';
 const CONFIG_DIR = join(homedir(), '.threewzrd');
 const CONFIG_PATH = join(CONFIG_DIR, '.env');
-async function promptInput(question) {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-    });
-    return new Promise((resolve) => {
-        rl.question(question, (answer) => {
-            rl.close();
-            resolve(answer.trim());
+async function promptInput(question, masked = false) {
+    if (!masked) {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
         });
+        return new Promise((resolve) => {
+            rl.question(question, (answer) => {
+                rl.close();
+                resolve(answer.trim());
+            });
+        });
+    }
+    // Masked input for sensitive data
+    return new Promise((resolve) => {
+        const stdin = process.stdin;
+        const stdout = process.stdout;
+        stdout.write(question);
+        const wasRaw = stdin.isRaw;
+        stdin.setRawMode(true);
+        stdin.resume();
+        stdin.setEncoding('utf8');
+        let input = '';
+        const onData = (char) => {
+            const code = char.charCodeAt(0);
+            // Enter key
+            if (code === 13 || code === 10) {
+                stdin.setRawMode(wasRaw ?? false);
+                stdin.removeListener('data', onData);
+                stdin.pause();
+                stdout.write('\n');
+                resolve(input.trim());
+                return;
+            }
+            // Ctrl+C
+            if (code === 3) {
+                stdin.setRawMode(wasRaw ?? false);
+                stdin.removeListener('data', onData);
+                stdout.write('\n');
+                process.exit(1);
+            }
+            // Backspace
+            if (code === 127 || code === 8) {
+                if (input.length > 0) {
+                    input = input.slice(0, -1);
+                    stdout.write('\b \b');
+                }
+                return;
+            }
+            // Regular character
+            if (code >= 32 && code <= 126) {
+                input += char;
+                stdout.write('*');
+            }
+        };
+        stdin.on('data', onData);
     });
 }
 async function showConfig() {
@@ -28,11 +74,13 @@ async function showConfig() {
         const content = await readFile(CONFIG_PATH, 'utf-8');
         const hasKey = content.includes('ANTHROPIC_API_KEY=');
         if (hasKey) {
-            // Extract and mask the key
+            // Extract and mask the key (show first 7 and last 4 chars only)
             const match = content.match(/ANTHROPIC_API_KEY=(.+)/);
             if (match && match[1]) {
                 const key = match[1].trim();
-                const masked = key.substring(0, 10) + '...' + key.substring(key.length - 4);
+                const masked = key.length > 11
+                    ? key.substring(0, 7) + '...' + key.substring(key.length - 4)
+                    : '***configured***';
                 console.log(chalk.gray('  API Key: ') + chalk.green(masked));
             }
         }
@@ -47,7 +95,7 @@ async function showConfig() {
 }
 async function setApiKey() {
     console.log();
-    const apiKey = await promptInput(chalk.magenta('  Enter new API key: '));
+    const apiKey = await promptInput(chalk.magenta('  Enter new API key: '), true);
     if (!apiKey) {
         console.log(chalk.red('  No key provided. Cancelled.'));
         return;

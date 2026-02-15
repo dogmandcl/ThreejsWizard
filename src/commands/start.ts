@@ -19,11 +19,6 @@ function loadEnvFiles(workingDir: string): void {
 }
 
 async function promptForApiKey(): Promise<string> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
   console.log();
   console.log(chalk.yellow('  No API key found!'));
   console.log();
@@ -31,11 +26,60 @@ async function promptForApiKey(): Promise<string> {
   console.log(chalk.gray('  Get one at: ') + chalk.cyan('https://console.anthropic.com/'));
   console.log();
 
+  // Use masked input for security
   return new Promise((resolve) => {
-    rl.question(chalk.magenta('  Enter your API key: '), (answer) => {
-      rl.close();
-      resolve(answer.trim());
-    });
+    const stdin = process.stdin;
+    const stdout = process.stdout;
+
+    stdout.write(chalk.magenta('  Enter your API key: '));
+
+    // Save original terminal state
+    const wasRaw = stdin.isRaw;
+
+    stdin.setRawMode(true);
+    stdin.resume();
+    stdin.setEncoding('utf8');
+
+    let input = '';
+
+    const onData = (char: string) => {
+      const code = char.charCodeAt(0);
+
+      // Enter key
+      if (code === 13 || code === 10) {
+        stdin.setRawMode(wasRaw ?? false);
+        stdin.removeListener('data', onData);
+        stdin.pause();
+        stdout.write('\n');
+        resolve(input.trim());
+        return;
+      }
+
+      // Ctrl+C
+      if (code === 3) {
+        stdin.setRawMode(wasRaw ?? false);
+        stdin.removeListener('data', onData);
+        stdout.write('\n');
+        process.exit(1);
+      }
+
+      // Backspace
+      if (code === 127 || code === 8) {
+        if (input.length > 0) {
+          input = input.slice(0, -1);
+          stdout.write('\b \b');
+        }
+        return;
+      }
+
+      // Regular character - show asterisk
+      if (code >= 32 && code <= 126) {
+        input += char;
+        stdout.write('*');
+      }
+    };
+
+    stdin.on('data', onData);
   });
 }
 
