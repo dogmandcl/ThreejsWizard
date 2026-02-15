@@ -1,0 +1,35 @@
+{
+  "name": "threewzrd",
+  "version": "1.0.0",
+  "main": "dist/cli.js",
+  "bin": {
+    "threewzrd": "./dist/cli.js"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js start",
+    "dev": "tsc && node dist/cli.js start"
+  },
+  "keywords": ["threejs", "ai-agent", "claude", "3d", "webgl", "cli"],
+  "author": "DOGMAN DEVELOPMENT",
+  "license": "ISC",
+  "description": "AI-powered CLI for generating Three.js projects from natural language",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.72.1",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "dotenv": "^17.2.3",
+    "ora": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,64 @@
+import Anthropic from '@anthropic-ai/sdk';
+
+export type ModelId = 'sonnet' | 'opus' | 'haiku';
+
+export const MODEL_MAP: Record<ModelId, string> = {
+  sonnet: 'claude-sonnet-4-20250514',
+  opus: 'claude-opus-4-20250514',
+  haiku: 'claude-haiku-4-20250514',
+};
+
+export type ProjectLanguage = 'javascript' | 'typescript';
+
+export type ProjectTarget = 'browser' | 'mobile' | 'desktop';
+
+export interface ProjectPreferences {
+  language: ProjectLanguage;
+  target: ProjectTarget;
+  description: string;
+}
+
+export interface ProjectConfig {
+  name: string;
+  language: ProjectLanguage;
+  target?: ProjectTarget;
+  path: string;
+  createdAt: Date;
+}
+
+export type MessageParam = Anthropic.MessageParam;
+
+export interface ToolResult {
+  success: boolean;
+  output: string;
+  error?: string;
+}
+
+export interface FileInfo {
+  path: string;
+  size: number;
+  isDirectory: boolean;
+}
+
+export type ToolName = 'write_file' | 'read_file' | 'run_command' | 'list_files';
+
+export interface WriteFileInput {
+  path: string;
+  content: string;
+}
+
+export interface ReadFileInput {
+  path: string;
+}
+
+export interface RunCommandInput {
+  command: string;
+  cwd?: string;
+}
+
+export interface ListFilesInput {
+  path?: string;
+  recursive?: boolean;
+}
+
+export type ToolInput = WriteFileInput | ReadFileInput | RunCommandInput | ListFilesInput;
