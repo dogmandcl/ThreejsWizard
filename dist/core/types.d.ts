@@ -30,6 +30,7 @@ export type ToolName = 'write_file' | 'read_file' | 'run_command' | 'list_files'
 export interface WriteFileInput {
     path: string;
     content: string;
+    skipValidation?: boolean;
 }
 export interface ReadFileInput {
     path: string;

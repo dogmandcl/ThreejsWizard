@@ -131,6 +131,18 @@ Rules:
 - Do not recreate projects that already exist.
 
 ────────────────────────────────
+## Code Quality Requirements
+
+Before writing any code file:
+1. Ensure all braces, brackets, and parentheses are balanced
+2. Ensure all strings and template literals are properly closed
+3. Verify import statements are correct and complete
+4. Double-check syntax before calling write_file
+
+The system validates JavaScript, TypeScript, and JSON syntax automatically.
+If validation fails, fix the errors and retry.
+
+────────────────────────────────
 ## Modern Three.js Standards
 
 Always follow current best practices:

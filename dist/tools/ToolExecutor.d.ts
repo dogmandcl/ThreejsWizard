@@ -28,7 +28,12 @@ export declare class ToolExecutor {
      */
     private validateListFilesInput;
     /**
+     * Tokenizes a single command (no pipes) into tokens respecting quotes
+     */
+    private tokenizeCommand;
+    /**
      * Parses a command string into executable and arguments safely
+     * Supports piped commands (e.g., "grep foo | wc -l")
      */
     private parseCommand;
     execute(toolName: ToolName, input: unknown): Promise<ToolResult>;

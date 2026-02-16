@@ -45,6 +45,7 @@ export type ToolName = 'write_file' | 'read_file' | 'run_command' | 'list_files'
 export interface WriteFileInput {
   path: string;
   content: string;
+  skipValidation?: boolean;  // Skip syntax validation for non-code files if needed
 }
 
 export interface ReadFileInput {
