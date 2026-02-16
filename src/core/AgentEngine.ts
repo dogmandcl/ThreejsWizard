@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { ModelId, MODEL_MAP, MessageParam, ToolName } from './types.js';
+import { ModelId, MODEL_MAP, MessageParam, ToolName, DEFAULT_MODEL } from './types.js';
 import { toolDefinitions } from '../tools/definitions.js';
 import { ToolExecutor } from '../tools/ToolExecutor.js';
 import { TerminalUI } from '../ui/TerminalUI.js';
@@ -13,7 +13,7 @@ const RETRY_DELAY_MS = 5000; // 5 seconds base delay
 
 export class AgentEngine {
   private client: Anthropic;
-  private model: ModelId = 'sonnet';
+  private model: ModelId = DEFAULT_MODEL;
   private conversationHistory: MessageParam[] = [];
   private toolExecutor: ToolExecutor;
   private ui: TerminalUI;

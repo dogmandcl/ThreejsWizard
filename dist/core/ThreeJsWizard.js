@@ -9,11 +9,14 @@ export class ThreeJsWizard {
     workingDirectory;
     isRunning = false;
     hasOnboarded = false;
-    constructor() {
+    constructor(options) {
         this.workingDirectory = process.cwd();
         this.ui = new TerminalUI();
         this.engine = new AgentEngine(this.ui, this.workingDirectory);
         this.projectManager = new ProjectManager(this.workingDirectory);
+        if (options?.model) {
+            this.engine.setModel(options.model);
+        }
     }
     async start() {
         this.isRunning = true;
@@ -100,16 +103,16 @@ export class ThreeJsWizard {
             case 'model':
                 if (args.length === 0) {
                     this.ui.printInfo(`Current model: ${this.engine.getModel()}`);
-                    this.ui.printInfo('Available models: sonnet, opus, haiku');
+                    this.ui.printInfo('Available models: sonnet, opus, haiku, opus-4.6');
                 }
                 else {
                     const modelName = args[0].toLowerCase();
-                    if (['sonnet', 'opus', 'haiku'].includes(modelName)) {
+                    if (['sonnet', 'opus', 'haiku', 'opus-4.6'].includes(modelName)) {
                         this.engine.setModel(modelName);
                         this.ui.printModelSwitch(modelName);
                     }
                     else {
-                        this.ui.printError(`Unknown model: ${modelName}. Use: sonnet, opus, or haiku`);
+                        this.ui.printError(`Unknown model: ${modelName}. Use: sonnet, opus, haiku, or opus-4.6`);
                     }
                 }
                 break;

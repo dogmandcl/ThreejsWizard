@@ -1,10 +1,25 @@
 import dotenv from 'dotenv';
 import { homedir } from 'os';
 import { join } from 'path';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, writeFile, readFile } from 'fs/promises';
 import * as readline from 'readline';
 import chalk from 'chalk';
 import { ThreeJsWizard } from '../core/ThreeJsWizard.js';
+const VALID_MODELS = ['sonnet', 'opus', 'haiku', 'opus-4.6'];
+async function getConfiguredModel() {
+    try {
+        const configPath = join(homedir(), '.threewzrd', 'config.json');
+        const content = await readFile(configPath, 'utf-8');
+        const config = JSON.parse(content);
+        if (config.model && VALID_MODELS.includes(config.model)) {
+            return config.model;
+        }
+    }
+    catch {
+        // No config file or invalid config
+    }
+    return undefined;
+}
 function loadEnvFiles(workingDir) {
     // Load from multiple locations (later ones don't override earlier)
     // 1. Current working directory
@@ -128,8 +143,23 @@ export async function startCommand(options) {
             await saveApiKey(apiKey);
         }
     }
+    // Determine which model to use (CLI flag > config > default)
+    let model;
+    if (options.model) {
+        if (VALID_MODELS.includes(options.model)) {
+            model = options.model;
+        }
+        else {
+            console.error(chalk.red(`Invalid model: ${options.model}`));
+            console.error(chalk.gray(`Valid models: ${VALID_MODELS.join(', ')}`));
+            process.exit(1);
+        }
+    }
+    else {
+        model = await getConfiguredModel();
+    }
     // Create and start the wizard
-    const wizard = new ThreeJsWizard();
+    const wizard = new ThreeJsWizard({ model });
     // Handle graceful shutdown
     process.on('SIGINT', () => {
         console.log('\nShutting down...');

@@ -4,6 +4,10 @@ import { ProjectManager } from '../project/ProjectManager.js';
 import { ModelId } from './types.js';
 import { runOnboarding, buildContextMessage } from '../ui/onboarding.js';
 
+export interface WizardOptions {
+  model?: ModelId;
+}
+
 export class ThreeJsWizard {
   private ui: TerminalUI;
   private engine: AgentEngine;
@@ -12,11 +16,15 @@ export class ThreeJsWizard {
   private isRunning = false;
   private hasOnboarded = false;
 
-  constructor() {
+  constructor(options?: WizardOptions) {
     this.workingDirectory = process.cwd();
     this.ui = new TerminalUI();
     this.engine = new AgentEngine(this.ui, this.workingDirectory);
     this.projectManager = new ProjectManager(this.workingDirectory);
+
+    if (options?.model) {
+      this.engine.setModel(options.model);
+    }
   }
 
   async start(): Promise<void> {
@@ -118,14 +126,14 @@ export class ThreeJsWizard {
       case 'model':
         if (args.length === 0) {
           this.ui.printInfo(`Current model: ${this.engine.getModel()}`);
-          this.ui.printInfo('Available models: sonnet, opus, haiku');
+          this.ui.printInfo('Available models: sonnet, opus, haiku, opus-4.6');
         } else {
           const modelName = args[0].toLowerCase();
-          if (['sonnet', 'opus', 'haiku'].includes(modelName)) {
+          if (['sonnet', 'opus', 'haiku', 'opus-4.6'].includes(modelName)) {
             this.engine.setModel(modelName as ModelId);
             this.ui.printModelSwitch(modelName as ModelId);
           } else {
-            this.ui.printError(`Unknown model: ${modelName}. Use: sonnet, opus, or haiku`);
+            this.ui.printError(`Unknown model: ${modelName}. Use: sonnet, opus, haiku, or opus-4.6`);
           }
         }
         break;
