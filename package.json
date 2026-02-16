@@ -1,6 +1,6 @@
 {
   "name": "threewzrd",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "AI-powered CLI for generating Three.js projects from natural language",
   "main": "dist/cli.js",
   "bin": {
