@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-export type ModelId = 'sonnet' | 'opus' | 'haiku' | 'opus-4.6';
+export type ModelId = 'sonnet' | 'opus' | 'haiku' | 'opus-4.5' | 'opus-4.6';
 export declare const MODEL_MAP: Record<ModelId, string>;
 export declare const DEFAULT_MODEL: ModelId;
 export type ProjectLanguage = 'javascript' | 'typescript';

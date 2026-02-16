@@ -12,7 +12,7 @@ interface StartOptions {
   model?: string;
 }
 
-const VALID_MODELS = ['sonnet', 'opus', 'haiku', 'opus-4.6'];
+const VALID_MODELS = ['sonnet', 'opus', 'haiku', 'opus-4.5', 'opus-4.6'];
 
 async function getConfiguredModel(): Promise<ModelId | undefined> {
   try {

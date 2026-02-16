@@ -1,15 +1,16 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-export type ModelId = 'sonnet' | 'opus' | 'haiku' | 'opus-4.6';
+export type ModelId = 'sonnet' | 'opus' | 'haiku' | 'opus-4.5' | 'opus-4.6';
 
 export const MODEL_MAP: Record<ModelId, string> = {
   sonnet: 'claude-sonnet-4-20250514',
   opus: 'claude-opus-4-20250514',
   haiku: 'claude-haiku-4-20250514',
+  'opus-4.5': 'claude-opus-4-5-20251101',
   'opus-4.6': 'claude-opus-4-6-20260201',
 };
 
-export const DEFAULT_MODEL: ModelId = 'opus-4.6';
+export const DEFAULT_MODEL: ModelId = 'opus-4.5';
 
 export type ProjectLanguage = 'javascript' | 'typescript';
 

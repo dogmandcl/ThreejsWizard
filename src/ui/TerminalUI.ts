@@ -130,6 +130,7 @@ export class TerminalUI {
       sonnet: 'Claude Sonnet 4',
       opus: 'Claude Opus 4',
       haiku: 'Claude Haiku 4',
+      'opus-4.5': 'Claude Opus 4.5',
       'opus-4.6': 'Claude Opus 4.6',
     };
     console.log(chalk.green(`Switched to ${modelNames[model]}`));

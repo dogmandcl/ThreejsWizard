@@ -103,16 +103,16 @@ export class ThreeJsWizard {
             case 'model':
                 if (args.length === 0) {
                     this.ui.printInfo(`Current model: ${this.engine.getModel()}`);
-                    this.ui.printInfo('Available models: sonnet, opus, haiku, opus-4.6');
+                    this.ui.printInfo('Available models: sonnet, opus, haiku, opus-4.5, opus-4.6');
                 }
                 else {
                     const modelName = args[0].toLowerCase();
-                    if (['sonnet', 'opus', 'haiku', 'opus-4.6'].includes(modelName)) {
+                    if (['sonnet', 'opus', 'haiku', 'opus-4.5', 'opus-4.6'].includes(modelName)) {
                         this.engine.setModel(modelName);
                         this.ui.printModelSwitch(modelName);
                     }
                     else {
-                        this.ui.printError(`Unknown model: ${modelName}. Use: sonnet, opus, haiku, or opus-4.6`);
+                        this.ui.printError(`Unknown model: ${modelName}. Use: sonnet, opus, haiku, opus-4.5, or opus-4.6`);
                     }
                 }
                 break;

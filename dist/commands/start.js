@@ -5,7 +5,7 @@ import { mkdir, writeFile, readFile } from 'fs/promises';
 import * as readline from 'readline';
 import chalk from 'chalk';
 import { ThreeJsWizard } from '../core/ThreeJsWizard.js';
-const VALID_MODELS = ['sonnet', 'opus', 'haiku', 'opus-4.6'];
+const VALID_MODELS = ['sonnet', 'opus', 'haiku', 'opus-4.5', 'opus-4.6'];
 async function getConfiguredModel() {
     try {
         const configPath = join(homedir(), '.threewzrd', 'config.json');

@@ -27,7 +27,7 @@ program
   .command('start')
   .description('Start the wizard REPL')
   .option('-d, --directory <path>', 'Working directory for the wizard', safeGetCwd())
-  .option('-m, --model <model>', 'Model to use (sonnet, opus, haiku, opus-4.6)')
+  .option('-m, --model <model>', 'Model to use (sonnet, opus, haiku, opus-4.5, opus-4.6)')
   .action(startCommand);
 
 program

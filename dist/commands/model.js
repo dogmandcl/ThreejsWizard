@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import { MODEL_MAP, DEFAULT_MODEL } from '../core/types.js';
 const CONFIG_DIR = join(homedir(), '.threewzrd');
 const CONFIG_PATH = join(CONFIG_DIR, 'config.json');
-const VALID_MODELS = ['sonnet', 'opus', 'haiku', 'opus-4.6'];
+const VALID_MODELS = ['sonnet', 'opus', 'haiku', 'opus-4.5', 'opus-4.6'];
 async function loadConfig() {
     try {
         const content = await readFile(CONFIG_PATH, 'utf-8');
