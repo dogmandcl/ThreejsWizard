@@ -58,19 +58,20 @@ export class ToolExecutor {
      */
     validateWriteFileInput(input) {
         if (!input || typeof input !== 'object') {
-            throw new Error('Invalid input: expected object');
+            throw new Error(`Invalid input: expected object, got ${typeof input}: ${JSON.stringify(input)}`);
         }
         const obj = input;
         if (typeof obj.path !== 'string' || !obj.path.trim()) {
-            throw new Error('Invalid input: path must be a non-empty string');
+            throw new Error(`Invalid input: path must be a non-empty string. Received keys: ${Object.keys(obj).join(', ')}`);
+        }
+        // Content is required - reject null/undefined
+        if (obj.content === null || obj.content === undefined) {
+            throw new Error(`Invalid input: content is required. Received keys: [${Object.keys(obj).join(', ')}], content type: ${typeof obj.content}`);
         }
         // Coerce content to string - handle various types the model might return
         let content;
         if (typeof obj.content === 'string') {
             content = obj.content;
-        }
-        else if (obj.content === null || obj.content === undefined) {
-            content = '';
         }
         else if (Array.isArray(obj.content)) {
             // Model sometimes returns content as an array of strings
@@ -83,6 +84,10 @@ export class ToolExecutor {
         else {
             // Fallback for numbers, booleans, etc.
             content = String(obj.content);
+        }
+        // Reject empty content - likely a model error
+        if (!content.trim()) {
+            throw new Error('Invalid input: content cannot be empty');
         }
         return {
             path: obj.path.trim(),

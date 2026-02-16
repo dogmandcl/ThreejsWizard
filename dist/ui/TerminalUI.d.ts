@@ -7,9 +7,13 @@ export declare class TerminalUI {
     private rl;
     private isStreaming;
     private thinkingSpinner;
+    private toolSpinner;
     constructor();
     startThinking(message?: string): void;
     stopThinking(): void;
+    startToolProcessing(toolCount: number): void;
+    updateToolProcessing(toolName: string): void;
+    stopToolProcessing(): void;
     confirm(message: string): Promise<boolean>;
     select(question: string, options: SelectOption[]): Promise<string>;
     printBanner(): void;

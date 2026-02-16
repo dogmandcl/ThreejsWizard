@@ -5,6 +5,7 @@ export class TerminalUI {
     rl;
     isStreaming = false;
     thinkingSpinner = null;
+    toolSpinner = null;
     constructor() {
         this.rl = readline.createInterface({
             input: process.stdin,
@@ -27,6 +28,26 @@ export class TerminalUI {
         // Ensure stdin is still active for readline after ora releases it
         if (process.stdin.isPaused()) {
             process.stdin.resume();
+        }
+    }
+    // Tool processing spinner
+    startToolProcessing(toolCount) {
+        const plural = toolCount > 1 ? 's' : '';
+        this.toolSpinner = ora({
+            text: chalk.yellow(`Executing ${toolCount} tool${plural}...`),
+            spinner: 'dots',
+            discardStdin: false,
+        }).start();
+    }
+    updateToolProcessing(toolName) {
+        if (this.toolSpinner) {
+            this.toolSpinner.text = chalk.yellow(`Executing: ${toolName}...`);
+        }
+    }
+    stopToolProcessing() {
+        if (this.toolSpinner) {
+            this.toolSpinner.stop();
+            this.toolSpinner = null;
         }
     }
     // Confirmation prompt for dangerous actions

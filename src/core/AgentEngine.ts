@@ -7,7 +7,7 @@ import { THREEJS_SYSTEM_PROMPT } from '../prompts/system.js';
 
 // Limits to prevent hitting rate limits
 const MAX_HISTORY_MESSAGES = 20; // Keep last N messages
-const MAX_TOKENS = 4096; // Reduced from 8192
+const MAX_TOKENS = 16384; // Needs to be large enough for file contents in tool calls
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 5000; // 5 seconds base delay
 
@@ -116,6 +116,11 @@ export class AgentEngine {
         this.ui.endStreaming();
       }
 
+      // Check for truncated response
+      if (response.stop_reason === 'max_tokens') {
+        this.ui.printWarning('Response was truncated due to length limit. Some tool calls may be incomplete.');
+      }
+
       // Process all content blocks
       for (const block of response.content) {
         contentBlocks.push(block);
@@ -137,10 +142,18 @@ export class AgentEngine {
         return false;
       }
 
+      // Show tool processing spinner
+      this.ui.startToolProcessing(toolUseBlocks.length);
+
       // Execute all tool calls
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
 
       for (const toolUse of toolUseBlocks) {
+        // Update spinner with current tool name
+        this.ui.updateToolProcessing(toolUse.name);
+        // Stop spinner before tool execution (which prints its own output)
+        this.ui.stopToolProcessing();
+
         const result = await this.toolExecutor.execute(
           toolUse.name as ToolName,
           toolUse.input
@@ -158,6 +171,12 @@ export class AgentEngine {
           content: output,
           is_error: !result.success,
         });
+
+        // Restart spinner if more tools remain
+        const remainingTools = toolUseBlocks.length - toolResults.length;
+        if (remainingTools > 0) {
+          this.ui.startToolProcessing(remainingTools);
+        }
       }
 
       // Add tool results to history
@@ -166,11 +185,12 @@ export class AgentEngine {
         content: toolResults,
       });
 
-      // Continue the loop if we have tool results to process
-      return response.stop_reason === 'tool_use';
+      // Always continue after tool execution - model must see results
+      return true;
 
     } catch (error) {
       this.ui.stopThinking();
+      this.ui.stopToolProcessing();
 
       // Handle rate limit errors with retry
       if (error instanceof Anthropic.RateLimitError) {

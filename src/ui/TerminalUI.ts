@@ -12,6 +12,7 @@ export class TerminalUI {
   private rl: readline.Interface;
   private isStreaming = false;
   private thinkingSpinner: Ora | null = null;
+  private toolSpinner: Ora | null = null;
 
   constructor() {
     this.rl = readline.createInterface({
@@ -37,6 +38,29 @@ export class TerminalUI {
     // Ensure stdin is still active for readline after ora releases it
     if (process.stdin.isPaused()) {
       process.stdin.resume();
+    }
+  }
+
+  // Tool processing spinner
+  startToolProcessing(toolCount: number): void {
+    const plural = toolCount > 1 ? 's' : '';
+    this.toolSpinner = ora({
+      text: chalk.yellow(`Executing ${toolCount} tool${plural}...`),
+      spinner: 'dots',
+      discardStdin: false,
+    }).start();
+  }
+
+  updateToolProcessing(toolName: string): void {
+    if (this.toolSpinner) {
+      this.toolSpinner.text = chalk.yellow(`Executing: ${toolName}...`);
+    }
+  }
+
+  stopToolProcessing(): void {
+    if (this.toolSpinner) {
+      this.toolSpinner.stop();
+      this.toolSpinner = null;
     }
   }
 
