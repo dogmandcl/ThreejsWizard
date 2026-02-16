@@ -11,6 +11,8 @@ npm install -g threewzrd
 ```
 
 Requires Node.js 18 or higher.
+The default model is claude sonnet we recommend using opus for complex coding
+users can change the model by using command threewzrd model [your model] EX. threewzrd model opus4.5
 
 ## Quick Start
 
@@ -117,6 +119,8 @@ ANTHROPIC_API_KEY=sk-ant-...
 - Input is masked when entering API keys
 - Commands are restricted to a safe whitelist (npm, npx, node, git, etc.)
 - File operations are sandboxed to the working directory
+- Use this agent at your own risk as it does edit and read files.
+
 
 ## License
 
