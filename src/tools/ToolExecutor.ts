@@ -77,27 +77,13 @@ export class ToolExecutor {
     if (typeof obj.path !== 'string' || !obj.path.trim()) {
       throw new Error('Invalid input: path must be a non-empty string');
     }
-
-    // Coerce content to string - handle various types the model might return
-    let content: string;
-    if (typeof obj.content === 'string') {
-      content = obj.content;
-    } else if (obj.content === null || obj.content === undefined) {
-      content = '';
-    } else if (Array.isArray(obj.content)) {
-      // Model sometimes returns content as an array of strings
-      content = obj.content.map(item => String(item)).join('\n');
-    } else if (typeof obj.content === 'object') {
-      // Fallback: stringify objects
-      content = JSON.stringify(obj.content, null, 2);
-    } else {
-      // Fallback for numbers, booleans, etc.
-      content = String(obj.content);
+    if (typeof obj.content !== 'string') {
+      throw new Error('Invalid input: content must be a string');
     }
 
     return {
       path: obj.path.trim(),
-      content,
+      content: obj.content,
       skipValidation: obj.skipValidation === true
     };
   }
