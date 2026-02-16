@@ -9,7 +9,6 @@ export class ThreeJsWizard {
     workingDirectory;
     isRunning = false;
     hasOnboarded = false;
-    currentMode = 'single-shot';
     constructor(options) {
         this.workingDirectory = process.cwd();
         this.ui = new TerminalUI();
@@ -43,7 +42,6 @@ export class ThreeJsWizard {
         if (!this.hasOnboarded && isEmptyDir) {
             const preferences = await runOnboarding(this.ui);
             this.hasOnboarded = true;
-            this.currentMode = preferences.mode;
             // Process the initial project request
             const contextMessage = buildContextMessage(preferences);
             await this.engine.processMessage(contextMessage);
@@ -55,8 +53,7 @@ export class ThreeJsWizard {
         // Main REPL loop
         while (this.isRunning) {
             try {
-                const { text: input, mode } = await this.ui.promptWithMode(this.currentMode);
-                this.currentMode = mode;
+                const input = await this.ui.prompt();
                 if (!input) {
                     continue;
                 }
@@ -65,13 +62,8 @@ export class ThreeJsWizard {
                     await this.handleCommand(input);
                     continue;
                 }
-                // Build message with mode context
-                const modePrefix = mode === 'planning'
-                    ? '[PLANNING MODE] Output a detailed implementation plan before coding.\n\n'
-                    : '';
-                const fullMessage = modePrefix + input;
                 // Process user message through agent
-                await this.engine.processMessage(fullMessage);
+                await this.engine.processMessage(input);
                 // Track created files
                 for (const file of this.engine.getCreatedFiles()) {
                     this.projectManager.addFile(file);

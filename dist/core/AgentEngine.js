@@ -58,17 +58,14 @@ export class AgentEngine {
     }
     async runAgentLoop() {
         let continueLoop = true;
-        let turn = 1;
         while (continueLoop) {
-            continueLoop = await this.runSingleTurn(turn);
-            turn++;
+            continueLoop = await this.runSingleTurn();
         }
     }
-    async runSingleTurn(turn, retryCount = 0) {
+    async runSingleTurn(retryCount = 0) {
         try {
-            // Show thinking indicator with turn info
-            const thinkingMessage = turn === 1 ? 'Thinking' : 'Processing';
-            this.ui.startThinking(thinkingMessage, turn);
+            // Show thinking indicator
+            this.ui.startThinking('Thinking');
             // Create the API request with streaming
             const stream = this.client.messages.stream({
                 model: MODEL_MAP[this.model],
@@ -113,13 +110,8 @@ export class AgentEngine {
             }
             // Execute all tool calls
             const toolResults = [];
-            const totalTools = toolUseBlocks.length;
-            for (let i = 0; i < toolUseBlocks.length; i++) {
-                const toolUse = toolUseBlocks[i];
-                const toolProgress = totalTools > 1 ? ` (${i + 1}/${totalTools})` : '';
-                this.ui.startThinking(`Executing ${toolUse.name}${toolProgress}`, turn);
+            for (const toolUse of toolUseBlocks) {
                 const result = await this.toolExecutor.execute(toolUse.name, toolUse.input);
-                this.ui.stopThinking();
                 // Truncate large outputs to save tokens
                 let output = result.success ? result.output : `Error: ${result.error}`;
                 if (output.length > 2000) {
@@ -148,7 +140,7 @@ export class AgentEngine {
                     const delay = RETRY_DELAY_MS * Math.pow(2, retryCount);
                     this.ui.printWarning(`Rate limited. Retrying in ${delay / 1000}s...`);
                     await this.sleep(delay);
-                    return this.runSingleTurn(turn, retryCount + 1);
+                    return this.runSingleTurn(retryCount + 1);
                 }
                 this.ui.printError('Rate limit exceeded. Please wait a moment and try again.');
                 return false;

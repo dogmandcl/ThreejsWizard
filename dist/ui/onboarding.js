@@ -12,33 +12,27 @@ export async function runOnboarding(ui) {
         { label: 'Mobile (React Native, etc.)', value: 'mobile' },
         { label: 'Desktop (Electron, etc.)', value: 'desktop' },
     ]);
-    // Ask for project description with mode toggle
+    // Ask for project description
     console.log();
-    console.log(chalk.cyan('  Describe what you\'d like to build:'));
+    console.log(chalk.cyan('  Now describe what you\'d like to build:'));
     console.log(chalk.gray('  (e.g., "A 3D solar system with orbiting planets")'));
     console.log();
-    const { text: description, mode } = await ui.promptWithMode('single-shot');
+    const description = await ui.prompt();
     console.log();
-    ui.printModeInfo(mode);
     console.log(chalk.gray('  ─────────────────────────────────────────'));
     console.log();
     return {
         language,
         target,
         description,
-        mode,
     };
 }
 export function buildContextMessage(prefs) {
-    const modeInstruction = prefs.mode === 'planning'
-        ? `\n\nIMPORTANT: The user has requested Planning Mode. You MUST output a detailed implementation plan with Architecture Overview, Dependencies, File Structure, and Execution Steps BEFORE writing any code.`
-        : `\n\nThe user has requested Single-Shot Mode. Plan internally and proceed directly to implementation without outputting a formal plan.`;
     return `The user wants to create a Three.js project with these preferences:
 - Language: ${prefs.language}
 - Target platform: ${prefs.target}
-- Execution mode: ${prefs.mode === 'planning' ? 'Planning Mode (detailed plan first)' : 'Single-Shot Mode (direct implementation)'}
 
-Their project description: ${prefs.description}${modeInstruction}
+Their project description: ${prefs.description}
 
 Please create the project structure and initial files based on these requirements. Start by setting up the basic Three.js scene.`;
 }

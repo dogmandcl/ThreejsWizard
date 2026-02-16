@@ -9,7 +9,6 @@ export declare class ThreeJsWizard {
     private workingDirectory;
     private isRunning;
     private hasOnboarded;
-    private currentMode;
     constructor(options?: WizardOptions);
     start(): Promise<void>;
     private handleCommand;
