@@ -5,4 +5,4 @@ export const MODEL_MAP = {
     'opus-4.5': 'claude-opus-4-5-20251101',
     'opus-4.6': 'claude-opus-4-6-20260201',
 };
-export const DEFAULT_MODEL = 'opus-4.5';
+export const DEFAULT_MODEL = 'sonnet';

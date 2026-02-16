@@ -29,6 +29,7 @@ export declare class TerminalUI {
     printWarning(message: string): void;
     printSuccess(message: string): void;
     printInfo(message: string): void;
+    printDebug(message: string): void;
     printToolCall(toolName: string, detail: string): void;
     printToolResult(success: boolean, message: string): void;
     startStreaming(): void;

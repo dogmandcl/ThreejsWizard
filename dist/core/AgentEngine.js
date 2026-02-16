@@ -67,11 +67,21 @@ export class AgentEngine {
             // Show thinking indicator
             this.ui.startThinking('Thinking');
             // Create the API request with streaming
+            // Use cache_control for system prompt and tools to reduce costs
+            const toolsWithCache = toolDefinitions.map((tool, i, arr) => i === arr.length - 1
+                ? { ...tool, cache_control: { type: 'ephemeral' } }
+                : tool);
             const stream = this.client.messages.stream({
                 model: MODEL_MAP[this.model],
                 max_tokens: MAX_TOKENS,
-                system: THREEJS_SYSTEM_PROMPT,
-                tools: toolDefinitions,
+                system: [
+                    {
+                        type: 'text',
+                        text: THREEJS_SYSTEM_PROMPT,
+                        cache_control: { type: 'ephemeral' }
+                    }
+                ],
+                tools: toolsWithCache,
                 messages: this.conversationHistory,
             });
             // Collect response content
@@ -88,6 +98,15 @@ export class AgentEngine {
             });
             // Wait for the complete response
             const response = await stream.finalMessage();
+            // Log usage for cost tracking
+            const usage = response.usage;
+            if (usage) {
+                const cacheHit = usage.cache_read_input_tokens || 0;
+                const cacheCreation = usage.cache_creation_input_tokens || 0;
+                this.ui.printDebug(`Tokens: ${usage.input_tokens} in, ${usage.output_tokens} out` +
+                    (cacheHit ? `, ${cacheHit} cached` : '') +
+                    (cacheCreation ? `, ${cacheCreation} cache created` : ''));
+            }
             // Make sure to stop thinking if no text was streamed
             this.ui.stopThinking();
             if (!isFirstText) {

@@ -162,6 +162,9 @@ export class TerminalUI {
     printInfo(message) {
         console.log(chalk.blue(message));
     }
+    printDebug(message) {
+        console.log(chalk.gray(`[debug] ${message}`));
+    }
     printToolCall(toolName, detail) {
         console.log();
         console.log(chalk.yellow(`[Tool: ${toolName}]`));

@@ -10,7 +10,7 @@ export const MODEL_MAP: Record<ModelId, string> = {
   'opus-4.6': 'claude-opus-4-6-20260201',
 };
 
-export const DEFAULT_MODEL: ModelId = 'opus-4.5';
+export const DEFAULT_MODEL: ModelId = 'sonnet';
 
 export type ProjectLanguage = 'javascript' | 'typescript';
 
