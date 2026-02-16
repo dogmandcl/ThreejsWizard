@@ -1,7 +1,7 @@
 import { TerminalUI } from '../ui/TerminalUI.js';
 import { AgentEngine } from './AgentEngine.js';
 import { ProjectManager } from '../project/ProjectManager.js';
-import { ModelId } from './types.js';
+import { ModelId, ExecutionMode } from './types.js';
 import { runOnboarding, buildContextMessage } from '../ui/onboarding.js';
 
 export interface WizardOptions {
@@ -15,6 +15,7 @@ export class ThreeJsWizard {
   private workingDirectory: string;
   private isRunning = false;
   private hasOnboarded = false;
+  private currentMode: ExecutionMode = 'single-shot';
 
   constructor(options?: WizardOptions) {
     this.workingDirectory = process.cwd();
@@ -54,6 +55,7 @@ export class ThreeJsWizard {
     if (!this.hasOnboarded && isEmptyDir) {
       const preferences = await runOnboarding(this.ui);
       this.hasOnboarded = true;
+      this.currentMode = preferences.mode;
 
       // Process the initial project request
       const contextMessage = buildContextMessage(preferences);
@@ -66,7 +68,8 @@ export class ThreeJsWizard {
     // Main REPL loop
     while (this.isRunning) {
       try {
-        const input = await this.ui.prompt();
+        const { text: input, mode } = await this.ui.promptWithMode(this.currentMode);
+        this.currentMode = mode;
 
         if (!input) {
           continue;
@@ -78,8 +81,14 @@ export class ThreeJsWizard {
           continue;
         }
 
+        // Build message with mode context
+        const modePrefix = mode === 'planning'
+          ? '[PLANNING MODE] Output a detailed implementation plan before coding.\n\n'
+          : '';
+        const fullMessage = modePrefix + input;
+
         // Process user message through agent
-        await this.engine.processMessage(input);
+        await this.engine.processMessage(fullMessage);
 
         // Track created files
         for (const file of this.engine.getCreatedFiles()) {

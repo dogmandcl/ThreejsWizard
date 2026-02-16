@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { spawn } from 'child_process';
+import chalk from 'chalk';
 import { shouldValidate, validate } from './CodeValidator.js';
 // Whitelist of allowed commands for security
 const ALLOWED_COMMANDS = new Set([
@@ -232,6 +233,7 @@ export class ToolExecutor {
         try {
             // Validate input structure
             const validatedInput = this.validateWriteFileInput(input);
+            this.ui.startToolSpinner('write_file', `Writing ${validatedInput.path}`);
             // Validate path doesn't escape working directory
             const fullPath = this.validatePath(validatedInput.path);
             const dir = path.dirname(fullPath);
@@ -241,8 +243,7 @@ export class ToolExecutor {
                 // If there are errors, don't write the file
                 if (!validationResult.valid) {
                     const errorDetails = validationResult.errors.join('\n  - ');
-                    this.ui.printToolCall('write_file', `Writing: ${validatedInput.path}`);
-                    this.ui.printToolResult(false, 'Syntax validation failed');
+                    this.ui.failToolSpinner('Syntax validation failed');
                     return {
                         success: false,
                         output: '',
@@ -261,8 +262,7 @@ export class ToolExecutor {
             // Write the file
             await fs.writeFile(fullPath, validatedInput.content, 'utf-8');
             this.createdFiles.add(validatedInput.path);
-            this.ui.printToolCall('write_file', `Writing: ${validatedInput.path}`);
-            this.ui.printToolResult(true, '');
+            this.ui.succeedToolSpinner(`Wrote ${validatedInput.path}`);
             return {
                 success: true,
                 output: `Successfully wrote ${validatedInput.path}`,
@@ -270,9 +270,7 @@ export class ToolExecutor {
         }
         catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            const displayPath = input?.path || 'unknown';
-            this.ui.printToolCall('write_file', `Writing: ${displayPath}`);
-            this.ui.printToolResult(false, errorMessage);
+            this.ui.failToolSpinner(`Failed to write: ${errorMessage}`);
             return {
                 success: false,
                 output: '',
@@ -284,11 +282,11 @@ export class ToolExecutor {
         try {
             // Validate input structure
             const validatedInput = this.validateReadFileInput(input);
+            this.ui.startToolSpinner('read_file', `Reading ${validatedInput.path}`);
             // Validate path doesn't escape working directory
             const fullPath = this.validatePath(validatedInput.path);
             const content = await fs.readFile(fullPath, 'utf-8');
-            this.ui.printToolCall('read_file', `Reading: ${validatedInput.path}`);
-            this.ui.printToolResult(true, '');
+            this.ui.succeedToolSpinner(`Read ${validatedInput.path}`);
             return {
                 success: true,
                 output: content,
@@ -296,9 +294,7 @@ export class ToolExecutor {
         }
         catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            const displayPath = input?.path || 'unknown';
-            this.ui.printToolCall('read_file', `Reading: ${displayPath}`);
-            this.ui.printToolResult(false, errorMessage);
+            this.ui.failToolSpinner(`Failed to read: ${errorMessage}`);
             return {
                 success: false,
                 output: '',
@@ -318,17 +314,20 @@ export class ToolExecutor {
             if (validatedInput.cwd) {
                 cwd = this.validatePath(validatedInput.cwd);
             }
-            this.ui.printToolCall('run_command', `Command: ${validatedInput.command}`);
+            // Show command for user confirmation
+            console.log();
+            console.log(chalk.yellow(`[Command] `) + chalk.gray(validatedInput.command));
             // Ask for user confirmation before running any command
             const approved = await this.ui.confirm(`Run this command?`);
             if (!approved) {
-                this.ui.printToolResult(false, 'User declined');
+                console.log(chalk.red('  ✗ Declined'));
                 return {
                     success: false,
                     output: '',
                     error: 'User declined to run this command',
                 };
             }
+            this.ui.startToolSpinner('run_command', `Running: ${validatedInput.command}`);
             // For piped commands, use shell with pre-validated command string
             // For non-piped commands, use spawn without shell for security
             return new Promise((resolve) => {
@@ -355,14 +354,14 @@ export class ToolExecutor {
                 child.on('close', (code) => {
                     const output = stdout + (stderr ? `\nStderr: ${stderr}` : '');
                     if (code === 0) {
-                        this.ui.printToolResult(true, '');
+                        this.ui.succeedToolSpinner('Command completed');
                         resolve({
                             success: true,
                             output: output || 'Command completed successfully',
                         });
                     }
                     else {
-                        this.ui.printToolResult(false, `Exit code: ${code}`);
+                        this.ui.failToolSpinner(`Exit code: ${code}`);
                         resolve({
                             success: false,
                             output: '',
@@ -371,7 +370,7 @@ export class ToolExecutor {
                     }
                 });
                 child.on('error', (error) => {
-                    this.ui.printToolResult(false, error.message);
+                    this.ui.failToolSpinner(error.message);
                     resolve({
                         success: false,
                         output: '',
@@ -382,9 +381,7 @@ export class ToolExecutor {
         }
         catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            const displayCmd = input?.command || 'unknown';
-            this.ui.printToolCall('run_command', `Command: ${displayCmd}`);
-            this.ui.printToolResult(false, errorMessage);
+            this.ui.failToolSpinner(`Failed: ${errorMessage}`);
             return {
                 success: false,
                 output: '',
@@ -396,15 +393,16 @@ export class ToolExecutor {
         try {
             // Validate input structure
             const validatedInput = this.validateListFilesInput(input);
+            const displayPath = validatedInput.path || '.';
+            this.ui.startToolSpinner('list_files', `Listing ${displayPath}`);
             // Validate path doesn't escape working directory
             const targetPath = validatedInput.path
                 ? this.validatePath(validatedInput.path)
                 : this.workingDirectory;
-            this.ui.printToolCall('list_files', `Listing: ${validatedInput.path || '.'}`);
             const files = await this.listFilesRecursive(targetPath, validatedInput.recursive ?? false);
             // Format output
             const relativePaths = files.map(f => path.relative(this.workingDirectory, f));
-            this.ui.printToolResult(true, '');
+            this.ui.succeedToolSpinner(`Listed ${relativePaths.length} items`);
             return {
                 success: true,
                 output: relativePaths.length > 0
@@ -414,9 +412,7 @@ export class ToolExecutor {
         }
         catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            const displayPath = input?.path || '.';
-            this.ui.printToolCall('list_files', `Listing: ${displayPath}`);
-            this.ui.printToolResult(false, errorMessage);
+            this.ui.failToolSpinner(`Failed to list: ${errorMessage}`);
             return {
                 success: false,
                 output: '',

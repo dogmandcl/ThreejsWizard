@@ -72,16 +72,19 @@ export class AgentEngine {
 
   private async runAgentLoop(): Promise<void> {
     let continueLoop = true;
+    let turn = 1;
 
     while (continueLoop) {
-      continueLoop = await this.runSingleTurn();
+      continueLoop = await this.runSingleTurn(turn);
+      turn++;
     }
   }
 
-  private async runSingleTurn(retryCount = 0): Promise<boolean> {
+  private async runSingleTurn(turn: number, retryCount = 0): Promise<boolean> {
     try {
-      // Show thinking indicator
-      this.ui.startThinking('Thinking');
+      // Show thinking indicator with turn info
+      const thinkingMessage = turn === 1 ? 'Thinking' : 'Processing';
+      this.ui.startThinking(thinkingMessage, turn);
 
       // Create the API request with streaming
       const stream = this.client.messages.stream({
@@ -139,12 +142,19 @@ export class AgentEngine {
 
       // Execute all tool calls
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
+      const totalTools = toolUseBlocks.length;
 
-      for (const toolUse of toolUseBlocks) {
+      for (let i = 0; i < toolUseBlocks.length; i++) {
+        const toolUse = toolUseBlocks[i];
+        const toolProgress = totalTools > 1 ? ` (${i + 1}/${totalTools})` : '';
+        this.ui.startThinking(`Executing ${toolUse.name}${toolProgress}`, turn);
+
         const result = await this.toolExecutor.execute(
           toolUse.name as ToolName,
           toolUse.input
         );
+
+        this.ui.stopThinking();
 
         // Truncate large outputs to save tokens
         let output = result.success ? result.output : `Error: ${result.error}`;
@@ -178,7 +188,7 @@ export class AgentEngine {
           const delay = RETRY_DELAY_MS * Math.pow(2, retryCount);
           this.ui.printWarning(`Rate limited. Retrying in ${delay / 1000}s...`);
           await this.sleep(delay);
-          return this.runSingleTurn(retryCount + 1);
+          return this.runSingleTurn(turn, retryCount + 1);
         }
         this.ui.printError('Rate limit exceeded. Please wait a moment and try again.');
         return false;

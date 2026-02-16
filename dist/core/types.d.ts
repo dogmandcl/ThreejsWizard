@@ -4,10 +4,12 @@ export declare const MODEL_MAP: Record<ModelId, string>;
 export declare const DEFAULT_MODEL: ModelId;
 export type ProjectLanguage = 'javascript' | 'typescript';
 export type ProjectTarget = 'browser' | 'mobile' | 'desktop';
+export type ExecutionMode = 'single-shot' | 'planning';
 export interface ProjectPreferences {
     language: ProjectLanguage;
     target: ProjectTarget;
     description: string;
+    mode: ExecutionMode;
 }
 export interface ProjectConfig {
     name: string;

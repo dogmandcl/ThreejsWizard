@@ -5,19 +5,27 @@ export class TerminalUI {
     rl;
     isStreaming = false;
     thinkingSpinner = null;
+    toolSpinner = null;
     constructor() {
         this.rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout,
         });
     }
-    // Thinking indicator
-    startThinking(message = 'Thinking') {
+    // Thinking indicator with turn info
+    startThinking(message = 'Thinking', turn) {
+        const turnInfo = turn ? chalk.gray(` [Turn ${turn}]`) : '';
         this.thinkingSpinner = ora({
-            text: chalk.cyan(message),
+            text: chalk.cyan(message) + turnInfo,
             spinner: 'dots',
             discardStdin: false, // Don't interfere with readline
         }).start();
+    }
+    updateThinking(message, turn) {
+        if (this.thinkingSpinner) {
+            const turnInfo = turn ? chalk.gray(` [Turn ${turn}]`) : '';
+            this.thinkingSpinner.text = chalk.cyan(message) + turnInfo;
+        }
     }
     stopThinking() {
         if (this.thinkingSpinner) {
@@ -27,6 +35,32 @@ export class TerminalUI {
         // Ensure stdin is still active for readline after ora releases it
         if (process.stdin.isPaused()) {
             process.stdin.resume();
+        }
+    }
+    // Tool execution spinner
+    startToolSpinner(toolName, detail) {
+        this.toolSpinner = ora({
+            text: chalk.yellow(`${toolName}: `) + chalk.gray(detail),
+            spinner: 'dots',
+            discardStdin: false,
+        }).start();
+    }
+    succeedToolSpinner(message) {
+        if (this.toolSpinner) {
+            this.toolSpinner.succeed(message ? chalk.green(message) : undefined);
+            this.toolSpinner = null;
+        }
+    }
+    failToolSpinner(message) {
+        if (this.toolSpinner) {
+            this.toolSpinner.fail(chalk.red(message));
+            this.toolSpinner = null;
+        }
+    }
+    stopToolSpinner() {
+        if (this.toolSpinner) {
+            this.toolSpinner.stop();
+            this.toolSpinner = null;
         }
     }
     // Confirmation prompt for dangerous actions
@@ -78,12 +112,18 @@ export class TerminalUI {
         console.log(chalk.gray('  lighting, animations, and more - just describe what'));
         console.log(chalk.gray('  you want in plain English.'));
         console.log();
+        console.log(chalk.gray('  Modes: ') + chalk.cyan('⚡ Quick') + chalk.gray(' | ') + chalk.magenta('📋 Plan') + chalk.gray('  (Tab to switch)'));
         console.log(chalk.gray('  Commands: ') + chalk.yellow('/help') + chalk.gray(' | ') + chalk.yellow('/clear') + chalk.gray(' | ') + chalk.yellow('/exit'));
         console.log();
         console.log(chalk.gray('  ─────────────────────────────────────────'));
         console.log();
     }
     printHelp() {
+        console.log();
+        console.log(chalk.yellow('Execution Modes:'));
+        console.log(chalk.cyan('  ⚡ Quick Mode') + chalk.gray('        - Direct implementation (default)'));
+        console.log(chalk.magenta('  📋 Plan Mode') + chalk.gray('         - Detailed architecture plan first'));
+        console.log(chalk.gray('  Press Tab while typing to switch modes'));
         console.log();
         console.log(chalk.yellow('Commands:'));
         console.log(chalk.cyan('  /help') + chalk.gray('              - Show this help message'));
@@ -175,6 +215,100 @@ export class TerminalUI {
                 resolve(answer.trim());
             });
         });
+    }
+    // Mode-aware prompt with Tab toggle for execution mode
+    async promptWithMode(defaultMode = 'single-shot') {
+        let currentMode = defaultMode;
+        // Print mode indicator and instructions
+        const printModeBar = () => {
+            const singleShot = currentMode === 'single-shot'
+                ? chalk.bgCyan.black(' ⚡ Quick ')
+                : chalk.gray(' ⚡ Quick ');
+            const planning = currentMode === 'planning'
+                ? chalk.bgMagenta.white(' 📋 Plan ')
+                : chalk.gray(' 📋 Plan ');
+            // Clear line and reprint
+            process.stdout.write('\r\x1b[K');
+            process.stdout.write(`  ${singleShot} ${planning}  ${chalk.gray('Tab to switch')}\n`);
+        };
+        return new Promise((resolve) => {
+            printModeBar();
+            console.log();
+            // Close the existing readline interface to fully release stdin
+            this.rl.close();
+            // Store the current input
+            let inputBuffer = '';
+            // Set up raw mode for keypress detection
+            if (process.stdin.isTTY) {
+                process.stdin.setRawMode(true);
+            }
+            process.stdin.resume();
+            const promptPrefix = chalk.magenta('  › ');
+            process.stdout.write(promptPrefix);
+            const handleKeypress = (chunk) => {
+                const key = chunk.toString();
+                // Tab key - toggle mode
+                if (key === '\t') {
+                    currentMode = currentMode === 'single-shot' ? 'planning' : 'single-shot';
+                    // Move cursor up, clear the mode bar, reprint it, move back down
+                    process.stdout.write('\x1b[2A'); // Move up 2 lines
+                    printModeBar();
+                    console.log();
+                    process.stdout.write(promptPrefix + inputBuffer);
+                    return;
+                }
+                // Enter key - submit
+                if (key === '\r' || key === '\n') {
+                    process.stdout.write('\n');
+                    cleanup();
+                    resolve({ text: inputBuffer.trim(), mode: currentMode });
+                    return;
+                }
+                // Ctrl+C - exit
+                if (key === '\x03') {
+                    cleanup();
+                    process.exit(0);
+                }
+                // Backspace
+                if (key === '\x7f' || key === '\b') {
+                    if (inputBuffer.length > 0) {
+                        inputBuffer = inputBuffer.slice(0, -1);
+                        process.stdout.write('\b \b');
+                    }
+                    return;
+                }
+                // Escape sequences (arrow keys, etc.) - ignore for simplicity
+                if (key.startsWith('\x1b')) {
+                    return;
+                }
+                // Regular character
+                if (key.length === 1 && key.charCodeAt(0) >= 32) {
+                    inputBuffer += key;
+                    process.stdout.write(key);
+                }
+            };
+            const cleanup = () => {
+                process.stdin.removeListener('data', handleKeypress);
+                if (process.stdin.isTTY) {
+                    process.stdin.setRawMode(false);
+                }
+                // Recreate readline interface
+                this.rl = readline.createInterface({
+                    input: process.stdin,
+                    output: process.stdout,
+                });
+            };
+            process.stdin.on('data', handleKeypress);
+        });
+    }
+    printModeInfo(mode) {
+        if (mode === 'single-shot') {
+            console.log(chalk.cyan('  ⚡ Quick Mode: ') + chalk.gray('Direct implementation without formal planning'));
+        }
+        else {
+            console.log(chalk.magenta('  📋 Plan Mode: ') + chalk.gray('Detailed architecture plan before implementation'));
+        }
+        console.log();
     }
     close() {
         this.rl.close();
