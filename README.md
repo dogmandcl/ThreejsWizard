@@ -23,7 +23,7 @@ users can change the model by using command threewzrd model [your model] EX. thr
    threewzrd start
    ```
 
-3. Enter your API key when prompted (it will be saved securely for future sessions)
+3. Enter your API key when prompted (it can be saved locally and securely for future sessions if requested)
 
 4. Describe what you want to build:
    ```
