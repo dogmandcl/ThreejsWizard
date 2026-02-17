@@ -126,6 +126,5 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 MIT
 
-
-<img src="screenshots/screenshot1.png" width="200">  
-<img src="screenshots/screenshot2.png" width="200">  
+## ScreenShots
+<img src="screenshots/screenshot1.png" width="400">  <img src="screenshots/screenshot2.png" width="400">  
