@@ -125,3 +125,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 ## License
 
 MIT
+
+
+<img src="screenshots/screenshot1.png" width="200">  
+<img src="screenshots/screenshot2.png" width="200">  
